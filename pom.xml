@@ -46,64 +46,152 @@
 			<version>3.1.1</version>
 		</dependency>
 				
+		<dependency>
+            <groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.9</version>
+            <exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
+        </dependency>
+        
+        <dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.2</version>
+			<exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
+		</dependency>
 		
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-dataimporthandler</artifactId>
             <version>5.2.1</version>
+            <exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
         </dependency>
+        
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-core</artifactId>
             <version>5.2.1</version>
+            <exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
         </dependency>
         
+
         <dependency>
-		    <groupId>lire</groupId>
-		    <artifactId>net.semanticmetadata.lire</artifactId>
-		    <version>0.95</version>
-		    <scope>system</scope>
-		    <systemPath>${project.basedir}/lib/lire.jar</systemPath>
-		</dependency>
-		<dependency>
-		    <groupId>com.jhlabs</groupId>
-		    <artifactId>com.jhlabs</artifactId>
-		    <version>1</version>
-		    <scope>system</scope>
-		    <systemPath>${project.basedir}/lib/jhlabs.jar</systemPath>
-		</dependency>
-		
+            <groupId>org.apache.solr</groupId>
+			<artifactId>solr-solrj</artifactId>
+            <version>5.2.1</version>
+            <exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
+        </dependency>
+        
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-core</artifactId>
 			<version>5.2.1</version>
+			<exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
 		</dependency>
 		
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-queryparser</artifactId>
 			<version>5.2.1</version>
+			<exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
 		</dependency>
 		
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-queries</artifactId>
 			<version>5.2.1</version>
+			<exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
 		</dependency>
 		
 		<dependency>
 			<groupId>org.apache.lucene</groupId>
 			<artifactId>lucene-misc</artifactId>
 			<version>5.2.1</version>
+			<exclusions>
+		        <exclusion>
+		            <groupId>*</groupId>
+		            <artifactId>*</artifactId>
+		        </exclusion>
+		    </exclusions>
 		</dependency>
-				
-				
-				
 		
-	
+		<dependency>
+			<groupId>org.apache.lucene</groupId>
+			<artifactId>lucene-analyzers-common</artifactId>
+			<version>5.2.1</version>
+		</dependency>
+		
+		<dependency>
+            <groupId>com.stromberglabs</groupId>
+            <artifactId>jopensurf</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/JOpenSurf.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>net.semanticmetadata</groupId>
+            <artifactId>lire</artifactId>
+            <version>0.9.4</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/lire.jar</systemPath>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.jhlabs</groupId>
+            <artifactId>image</artifactId>
+            <version>1.7</version>
+            <scope>system</scope>
+            <systemPath>${basedir}/lib/jhlabs.jar</systemPath>
+        </dependency>
+        
+		<dependency>
+		  <groupId>junit</groupId>
+		  <artifactId>junit</artifactId>
+		  <version>4.12</version>
+		</dependency>
     </dependencies>
 	    
-    
     <scm>
         <url>https://github.com/jawaharprasd/lire-solr</url>
     </scm>
@@ -122,9 +210,10 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <finalName>lire-solr-request-handler-${version}</finalName>
+                    <finalName>lire-solr-request-handler-${project.version}</finalName>
                     <version>0.1.0</version>
                     <includes>
+                    	<include>net/**</include>
                         <include>org/**</include>
                     </includes>
                 </configuration>
@@ -134,7 +223,7 @@
                 <version>3.3</version>
                 <configuration>
                     <source>1.6</source>
-                    <target>1.6</target>
+                    <target>1.6	</target>
                     <encoding>utf-8</encoding>
                 </configuration>
             </plugin>
