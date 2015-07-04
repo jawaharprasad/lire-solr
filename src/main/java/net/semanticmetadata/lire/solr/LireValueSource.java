@@ -41,16 +41,13 @@ package net.semanticmetadata.lire.solr;
 
 import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
 import net.semanticmetadata.lire.imageanalysis.LireFeature;
-
-import org.apache.lucene.index.DocValues;
-import org.apache.lucene.index.DocValuesType;
-import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.queries.function.FunctionValues;
 import org.apache.lucene.queries.function.ValueSource;
 import org.apache.lucene.queries.function.docvalues.DocTermsIndexDocValues;
-import org.apache.lucene.uninverting.UninvertingReader;
+import org.apache.lucene.search.FieldCache;
 import org.apache.lucene.util.BytesRef;
 import org.apache.solr.common.util.Base64;
 
@@ -112,10 +109,10 @@ public class LireValueSource extends ValueSource {
         feature.setByteArrayRepresentation(hist);
     }
 
-    public FunctionValues getValues(Map context, LeafReaderContext readerContext) throws IOException {
+    public FunctionValues getValues(Map context, AtomicReaderContext readerContext) throws IOException {
         final FieldInfo fieldInfo = readerContext.reader().getFieldInfos().fieldInfo(field);
-        if (fieldInfo != null && fieldInfo.getDocValuesType() == DocValuesType.BINARY) {
-            final BinaryDocValues binaryValues = DocValues.getBinary(readerContext.reader(), field);//FieldCache.DEFAULT.getTerms(readerContext.reader(), field, false);
+        if (fieldInfo != null && fieldInfo.getDocValuesType() == FieldInfo.DocValuesType.BINARY) {
+            final BinaryDocValues binaryValues = FieldCache.DEFAULT.getTerms(readerContext.reader(), field, false);
             return new FunctionValues() {
                 BytesRef tmp = new BytesRef();
 

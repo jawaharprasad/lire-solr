@@ -86,7 +86,7 @@ public class ParallelSolrIndexer implements Runnable {
     private boolean force = false;
     private static boolean individualFiles = false;
     private static int numberOfThreads = 4;
-    LinkedBlockingQueue<WorkItem> images = new LinkedBlockingQueue<WorkItem>(maxCacheSize);
+    LinkedBlockingQueue<CSVWorkItem> images = new LinkedBlockingQueue<CSVWorkItem>(maxCacheSize);
     boolean ended = false;
     int overallCount = 0;
     OutputStream dos = null;
@@ -106,6 +106,9 @@ public class ParallelSolrIndexer implements Runnable {
         listOfFeatures.add(ColorLayout.class);
         listOfFeatures.add(EdgeHistogram.class);
         listOfFeatures.add(JCD.class);
+        listOfFeatures.add(CEDD.class);
+        listOfFeatures.add(ScalableColor.class);
+        listOfFeatures.add(OpponentHistogram.class);
 
     }
 
@@ -388,9 +391,14 @@ public class ParallelSolrIndexer implements Runnable {
         public void run() {
             try {
                 BufferedReader br = new BufferedReader(new FileReader(fileList));
-                String file = null;
+                String line = null, file = null, id = null;
                 File next = null;
-                while ((file = br.readLine()) != null) {
+                while ((line = br.readLine()) != null) {
+                	
+                	String[] lineArray = line.split(",");
+                	id = lineArray[0];
+                	file = lineArray[5];
+                	
                     next = new File(file);
                     try {
                         int fileSize = (int) next.length();
@@ -398,7 +406,7 @@ public class ParallelSolrIndexer implements Runnable {
                         FileInputStream fis = new FileInputStream(next);
                         fis.read(buffer);
                         String path = next.getCanonicalPath();
-                        images.put(new WorkItem(path, buffer));
+                        images.put(new CSVWorkItem(id.toString(), path, buffer));
                     } catch (Exception e) {
                         System.err.println("Could not read image " + file + ": " + e.getMessage());
                     }
@@ -406,8 +414,9 @@ public class ParallelSolrIndexer implements Runnable {
                 for (int i = 0; i < numberOfThreads*2; i++) {
                     String tmpString = null;
                     BufferedImage tmpImg = null;
+                    String tmpId = null;
                     try {
-                        images.put(new WorkItem(tmpString, tmpImg));
+                        images.put(new CSVWorkItem(tmpId, tmpString, tmpImg));
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -421,7 +430,7 @@ public class ParallelSolrIndexer implements Runnable {
     }
 
     class Consumer implements Runnable {
-        WorkItem tmp = null;
+        CSVWorkItem tmp = null;
         LinkedList<LireFeature> features = new LinkedList<LireFeature>();
         int count = 0;
         boolean locallyEnded = false;
@@ -492,11 +501,11 @@ public class ParallelSolrIndexer implements Runnable {
                         sb.append("<doc>");
                         sb.append("<field name=\"id\">");
                         if (idp == null)
-                            sb.append(tmp.getFileName());
+                            sb.append(tmp.getId());
                         else
                             sb.append(idp.getIdentifier(tmp.getFileName()));
                         sb.append("</field>");
-                        sb.append("<field name=\"title\">");
+                        sb.append("<field update=\"set\" name=\"title\">");
                         if (idp == null)
                             sb.append(tmp.getFileName());
                         else
@@ -512,10 +521,10 @@ public class ParallelSolrIndexer implements Runnable {
                                 String histogramField = FeatureRegistry.codeToFeatureField(featureCode);
                                 String hashesField = FeatureRegistry.codeToHashField(featureCode);
 
-                                sb.append("<field name=\"" + histogramField + "\">");
+                                sb.append("<field update=\"set\" name=\"" + histogramField + "\">");
                                 sb.append(Base64.encodeBase64String(feature.getByteArrayRepresentation()));
                                 sb.append("</field>");
-                                sb.append("<field name=\"" + hashesField + "\">");
+                                sb.append("<field update=\"set\" name=\"" + hashesField + "\">");
                                 sb.append(arrayToString(BitSampling.generateHashes(feature.getDoubleHistogram())));
                                 sb.append("</field>");
                             }

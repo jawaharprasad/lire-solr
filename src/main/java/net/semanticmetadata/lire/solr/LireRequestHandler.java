@@ -44,11 +44,15 @@ import net.semanticmetadata.lire.imageanalysis.LireFeature;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.utils.ImageUtils;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queries.BooleanFilter;
+import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.queries.TermsFilter;
 import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.util.BytesRef;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -58,6 +62,7 @@ import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.search.SolrIndexSearcher;
 
 import javax.imageio.ImageIO;
+
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -200,6 +205,18 @@ public class LireRequestHandler extends RequestHandlerBase {
             Document d = indexReader.document((int) Math.floor(Math.random() * maxDoc));
             m.put("id", d.getValues("id")[0]);
             m.put("title", d.getValues("title")[0]);
+            String fieldsRequested = req.getParams().get("fl");
+            if (fieldsRequested!=null && fieldsRequested.contains(",")){
+            	StringTokenizer st = new StringTokenizer(fieldsRequested, ",");
+	            while (st.hasMoreElements()) {
+	                String tmpField = st.nextToken();
+	                if (d.getFields(tmpField).length > 1) {
+	                    m.put(d.getFields(tmpField)[0].name(), d.getValues(tmpField));
+	                } else if (d.getFields(tmpField).length > 0) {
+	                    m.put(d.getFields(tmpField)[0].name(), d.getFields(tmpField)[0].stringValue());
+	                }
+	            }
+            }
             list.add(m);
         }
         rsp.add("docs", list);
@@ -364,26 +381,32 @@ public class LireRequestHandler extends RequestHandlerBase {
         time = System.currentTimeMillis();
 
         Filter filter = null;
+        BooleanFilter filter2 = new BooleanFilter();
         // if the request contains a filter:
         if (req.getParams().get("fq")!=null) {
             // only filters with [<field>:<value> ]+ are supported
-            StringTokenizer st = new StringTokenizer(req.getParams().get("fq"), " ");
+            StringTokenizer st = new StringTokenizer(req.getParams().get("fq"), ",");
             LinkedList<Term> filterTerms = new LinkedList<Term>();
             while (st.hasMoreElements()) {
                 String[] tmpToken = st.nextToken().split(":");
                 if (tmpToken.length>1) {
                     filterTerms.add(new Term(tmpToken[0], tmpToken[1]));
+                    filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0], tmpToken[1])), Occur.MUST));
                 }
             }
-            if (filterTerms.size()>0)
+            /*if (filterTerms.size()>0){
                 filter = new TermsFilter(filterTerms);
+            	filter2 = new BooleanFilter();
+            	filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0], tmpToken[1])), Occur.MUST));
+            }*/
+            	
         }
 
         TopDocs docs;   // with query only.
-        if (filter == null) {
+        if (req.getParams().get("fq")==null) {
             docs = searcher.search(query, numberOfCandidateResults);
         } else {
-            docs = searcher.search(query, filter, numberOfCandidateResults);
+            docs = searcher.search(query, filter2, numberOfCandidateResults);
         }
 //        TopDocs docs = searcher.search(query, new TermsFilter(terms), numberOfCandidateResults);   // with TermsFilter and boosting by simple query
 //        TopDocs docs = searcher.search(new ConstantScoreQuery(new TermsFilter(terms)), numberOfCandidateResults); // just with TermsFilter
