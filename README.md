@@ -208,6 +208,11 @@ file per image. Specifying an outfile will collect the information of all images
 -y ... defines which feature classes are to be extracted. default is "-y ph,cl,eh,jc". "-y ce,ac" would
        add to the other four features.
 
+Using mvn:
+```
+mvn exec:java -Dexec.classpathScope=compile -Dexec.args="-i /Users/jawahar/a/first/1_sku.csv -n 16 -f -o /Users/jawahar/a/first/1_sku_images.xml"
+```
+
 INFILE
 ------
 The infile gives one image per line with the full path. You can create an infile easily on Windows with running in the
