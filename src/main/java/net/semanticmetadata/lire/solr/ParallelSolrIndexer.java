@@ -63,7 +63,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * <p/>
  * Available options are:
  * <ul>
- * <li>-i <infile> … gives a file with a list of images to be indexed, one per line.</li>
+ * <li>-i <infile> … gives a csv file with a list of images to be indexed, one per line. CSV Format: id,imagefilepath - ignores fields after imagefilepath</li>
  * <li>-o <outfile> ... gives XML file the output is written to. if none is given the outfile is <infile>.xml</li>
  * <li>-n <threads> ... gives the number of threads used for extraction. The number of cores is a good value for that.</li>
  * <li>-m <max-side-length> ... gives a maximum side length for extraction. This option is useful if very larger images are indexed.</li>
@@ -79,6 +79,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  * curl http://localhost:9000/solr/lire/update  -H "Content-Type: text/xml" --data-binary "<commit/>"</pre>
  *
  * @author Mathias Lux, mathias@juggle.at on  13.08.2013
+ * @author Jawahar Prasad, w3engineers@gmail.com, 04.07.2015
  */
 public class ParallelSolrIndexer implements Runnable {
     private final int maxCacheSize = 100;
@@ -397,7 +398,7 @@ public class ParallelSolrIndexer implements Runnable {
                 	
                 	String[] lineArray = line.split(",");
                 	id = lineArray[0];
-                	file = lineArray[5];
+                	file = lineArray[1];
                 	
                     next = new File(file);
                     try {

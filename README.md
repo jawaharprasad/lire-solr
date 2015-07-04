@@ -135,6 +135,12 @@ You'll also need the respective fields in the schema.xml file:
        <!-- OpponentHistogram -->
        <!--field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
        <!--field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
+       <!-- CEDD -->
+       <!--field name="ce_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
+       <!--field name="ce_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
+       <!-- ScalableColor -->
+       <!--field name="sc_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
+       <!--field name="sc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
        <!-- Needed for SOLR -->
        <field name="_version_" type="long" indexed="true" stored="true"/>
     </fields>
@@ -143,8 +149,7 @@ Do not forget to add the custom field at the very same file:
 
     <fieldtype name="binaryDV" class="net.semanticmetadata.lire.solr.BinaryDocValuesField"/>
 
-There is also a sort function based on LIRE. The function parser needs to be added to the
-solarconfig.xml file like this:
+There is also a sort function based on LIRE. The function parser needs to be added to the solrconfig.xml file like this:
 
       <valueSourceParser name="lirefunc"
         class="net.semanticmetadata.lire.solr.LireValueSourceParser" />
@@ -255,6 +260,10 @@ solrconfig.xml, and then give the configuration for the EntityProcessor like thi
                     <field column="jc_hi"/>
                     <field column="eh_ha"/>
                     <field column="eh_hi"/>
+                    <field column="ce_ha"/>
+                    <field column="ce_hi"/>
+                    <field column="sc_ha"/>
+                    <field column="sc_hi"/>
                 </entity>
             </entity>
         </document>
