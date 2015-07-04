@@ -133,14 +133,14 @@ You'll also need the respective fields in the schema.xml file:
        <field name="jc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
        <field name="jc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
        <!-- OpponentHistogram -->
-       <!--field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
+       <field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/>
+       <field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
        <!-- CEDD -->
-       <!--field name="ce_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="ce_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
+       <field name="ce_ha" type="text_ws" indexed="true" stored="false" required="false"/>
+       <field name="ce_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
        <!-- ScalableColor -->
-       <!--field name="sc_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="sc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
+       <field name="sc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
+       <field name="sc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
        <!-- Needed for SOLR -->
        <field name="_version_" type="long" indexed="true" stored="true"/>
     </fields>
