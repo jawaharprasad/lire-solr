@@ -232,9 +232,12 @@
 		        <configuration>
 		        	<forkCount>16</forkCount>
         			<reuseForks>true</reuseForks>
-        			<argLine>-Xmx2048M -server</argLine>
 		          <executable>java</executable>
 		          <mainClass>net.semanticmetadata.lire.solr.ParallelSolrIndexer</mainClass>
+		          <arguments>
+		            <argument>-Xmx2048M</argument>
+		            <argument>-server</argument>
+		          </arguments>
 		        </configuration>
 		      </plugin>
 		      
