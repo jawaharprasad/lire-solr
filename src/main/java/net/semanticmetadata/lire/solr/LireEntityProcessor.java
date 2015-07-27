@@ -28,7 +28,7 @@ import static org.apache.solr.handler.dataimport.XPathEntityProcessor.URL;
 public class LireEntityProcessor extends EntityProcessorBase {
     protected boolean done = false;
     protected LireFeature[] listOfFeatures = new LireFeature[]{
-            new ColorLayout(), new PHOG(), new EdgeHistogram(), new JCD(), new OpponentHistogram()
+            new ColorLayout(), new PHOG(), new EdgeHistogram(), new JCD(), new OpponentHistogram(), new CEDD(), new ScalableColor()
     };
     protected static HashMap<Class, String> classToPrefix = new HashMap<Class, String>(5);
     int count = 0;
@@ -39,6 +39,8 @@ public class LireEntityProcessor extends EntityProcessorBase {
         classToPrefix.put(PHOG.class, "ph");
         classToPrefix.put(OpponentHistogram.class, "oh");
         classToPrefix.put(JCD.class, "jc");
+        classToPrefix.put(CEDD.class, "ce");
+        classToPrefix.put(ScalableColor.class, "sc");
     }
 
 

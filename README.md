@@ -133,8 +133,14 @@ You'll also need the respective fields in the schema.xml file:
        <field name="jc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
        <field name="jc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
        <!-- OpponentHistogram -->
-       <!--field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/-->
-       <!--field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/-->
+       <field name="oh_ha" type="text_ws" indexed="true" stored="false" required="false"/>
+       <field name="oh_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
+       <!-- CEDD -->
+       <field name="ce_ha" type="text_ws" indexed="true" stored="false" required="false"/>
+       <field name="ce_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
+       <!-- ScalableColor -->
+       <field name="sc_ha" type="text_ws" indexed="true" stored="false" required="false"/>
+       <field name="sc_hi" type="binaryDV"  indexed="false" stored="true" required="false"/>
        <!-- Needed for SOLR -->
        <field name="_version_" type="long" indexed="true" stored="true"/>
     </fields>
@@ -143,8 +149,7 @@ Do not forget to add the custom field at the very same file:
 
     <fieldtype name="binaryDV" class="net.semanticmetadata.lire.solr.BinaryDocValuesField"/>
 
-There is also a sort function based on LIRE. The function parser needs to be added to the
-solarconfig.xml file like this:
+There is also a sort function based on LIRE. The function parser needs to be added to the solrconfig.xml file like this:
 
       <valueSourceParser name="lirefunc"
         class="net.semanticmetadata.lire.solr.LireValueSourceParser" />
@@ -203,6 +208,11 @@ file per image. Specifying an outfile will collect the information of all images
 -y ... defines which feature classes are to be extracted. default is "-y ph,cl,eh,jc". "-y ce,ac" would
        add to the other four features.
 
+Using mvn:
+```
+mvn exec:java -Dexec.classpathScope=compile -Dexec.args="-i /Users/jawahar/a/first/1_sku.csv -n 16 -f -o /Users/jawahar/a/first/1_sku_images.xml"
+```
+
 INFILE
 ------
 The infile gives one image per line with the full path. You can create an infile easily on Windows with running in the
@@ -255,6 +265,10 @@ solrconfig.xml, and then give the configuration for the EntityProcessor like thi
                     <field column="jc_hi"/>
                     <field column="eh_ha"/>
                     <field column="eh_hi"/>
+                    <field column="ce_ha"/>
+                    <field column="ce_hi"/>
+                    <field column="sc_ha"/>
+                    <field column="sc_hi"/>
                 </entity>
             </entity>
         </document>

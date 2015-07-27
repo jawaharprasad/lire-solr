@@ -39,16 +39,44 @@
 
 package net.semanticmetadata.lire.solr;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.TreeSet;
+
+import javax.imageio.ImageIO;
+
 import net.semanticmetadata.lire.imageanalysis.EdgeHistogram;
 import net.semanticmetadata.lire.imageanalysis.LireFeature;
 import net.semanticmetadata.lire.impl.SimpleResult;
 import net.semanticmetadata.lire.indexing.hashing.BitSampling;
 import net.semanticmetadata.lire.utils.ImageUtils;
+
 import org.apache.commons.codec.binary.Base64;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.*;
+import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.MultiDocValues;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.BooleanFilter;
+import org.apache.lucene.queries.FilterClause;
 import org.apache.lucene.queries.TermsFilter;
-import org.apache.lucene.search.*;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.BytesRef;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -56,12 +84,7 @@ import org.apache.solr.handler.RequestHandlerBase;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.search.SolrIndexSearcher;
-
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.net.URL;
-import java.util.*;
+import org.apache.solr.search.SyntaxError;
 
 /**
  * This is the main LIRE RequestHandler for the Solr Plugin. It supports query by example using the indexed id,
@@ -200,6 +223,18 @@ public class LireRequestHandler extends RequestHandlerBase {
             Document d = indexReader.document((int) Math.floor(Math.random() * maxDoc));
             m.put("id", d.getValues("id")[0]);
             m.put("title", d.getValues("title")[0]);
+            String fieldsRequested = req.getParams().get("fl");
+            if (fieldsRequested!=null && fieldsRequested.contains(",")){
+            	StringTokenizer st = new StringTokenizer(fieldsRequested, ",");
+	            while (st.hasMoreElements()) {
+	                String tmpField = st.nextToken();
+	                if (d.getFields(tmpField).length > 1) {
+	                    m.put(d.getFields(tmpField)[0].name(), d.getValues(tmpField));
+	                } else if (d.getFields(tmpField).length > 0) {
+	                    m.put(d.getFields(tmpField)[0].name(), d.getFields(tmpField)[0].stringValue());
+	                }
+	            }
+            }
             list.add(m);
         }
         rsp.add("docs", list);
@@ -356,6 +391,7 @@ public class LireRequestHandler extends RequestHandlerBase {
      * @throws IOException
      * @throws IllegalAccessException
      * @throws InstantiationException
+     * @throws SyntaxError 
      */
     private void doSearch(SolrQueryRequest req, SolrQueryResponse rsp, SolrIndexSearcher searcher, String hashFieldName, int maximumHits, List<Term> terms, Query query, LireFeature queryFeature) throws IOException, IllegalAccessException, InstantiationException {
         // temp feature instance
@@ -363,27 +399,38 @@ public class LireRequestHandler extends RequestHandlerBase {
         // Taking the time of search for statistical purposes.
         time = System.currentTimeMillis();
 
-        Filter filter = null;
+        //Filter filter = null;
+        BooleanFilter filter2 = new BooleanFilter();
         // if the request contains a filter:
         if (req.getParams().get("fq")!=null) {
             // only filters with [<field>:<value> ]+ are supported
-            StringTokenizer st = new StringTokenizer(req.getParams().get("fq"), " ");
-            LinkedList<Term> filterTerms = new LinkedList<Term>();
+            StringTokenizer st = new StringTokenizer(req.getParams().get("fq"), ",");
+            //LinkedList<Term> filterTerms = new LinkedList<Term>();
             while (st.hasMoreElements()) {
                 String[] tmpToken = st.nextToken().split(":");
                 if (tmpToken.length>1) {
-                    filterTerms.add(new Term(tmpToken[0], tmpToken[1]));
+                    //filterTerms.add(new Term(tmpToken[0], tmpToken[1]));
+                	if(tmpToken[0].length()>=1 && tmpToken[0].charAt(0) == '-'){
+                		filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0].substring(1), tmpToken[1])), Occur.MUST_NOT));
+                	}
+                	else{
+                		filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0], tmpToken[1])), Occur.MUST));
+                	}
                 }
             }
-            if (filterTerms.size()>0)
+            /*if (filterTerms.size()>0){
                 filter = new TermsFilter(filterTerms);
+            	filter2 = new BooleanFilter();
+            	filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0], tmpToken[1])), Occur.MUST));
+            }*/
+            	
         }
 
         TopDocs docs;   // with query only.
-        if (filter == null) {
+        if (req.getParams().get("fq")==null) {
             docs = searcher.search(query, numberOfCandidateResults);
         } else {
-            docs = searcher.search(query, filter, numberOfCandidateResults);
+            docs = searcher.search(query, filter2, numberOfCandidateResults);
         }
 //        TopDocs docs = searcher.search(query, new TermsFilter(terms), numberOfCandidateResults);   // with TermsFilter and boosting by simple query
 //        TopDocs docs = searcher.search(new ConstantScoreQuery(new TermsFilter(terms)), numberOfCandidateResults); // just with TermsFilter
@@ -409,14 +456,14 @@ public class LireRequestHandler extends RequestHandlerBase {
 //            tmpFeature.setByteArrayRepresentation(d.getBinaryValue(name).bytes, d.getBinaryValue(name).offset, d.getBinaryValue(name).length);
             tmpScore = queryFeature.getDistance(tmpFeature);
             if (resultScoreDocs.size() < maximumHits) { // todo: There's potential here for a memory saver, think of a clever data structure that can do the trick without creating a new SimpleResult for each result.
-                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(docs.scoreDocs[i].doc), docs.scoreDocs[i].doc));
+                resultScoreDocs.add(new SimpleResult(tmpScore, null, docs.scoreDocs[i].doc));
                 maxDistance = resultScoreDocs.last().getDistance();
             } else if (tmpScore < maxDistance) {
 //                if it is nearer to the sample than at least one of the current set:
 //                remove the last one ...
                 resultScoreDocs.remove(resultScoreDocs.last());
 //                add the new one ...
-                resultScoreDocs.add(new SimpleResult(tmpScore, searcher.doc(docs.scoreDocs[i].doc), docs.scoreDocs[i].doc));
+                resultScoreDocs.add(new SimpleResult(tmpScore, null, docs.scoreDocs[i].doc));
 //                and set our new distance border ...
                 maxDistance = resultScoreDocs.last().getDistance();
             }
@@ -425,15 +472,21 @@ public class LireRequestHandler extends RequestHandlerBase {
         time = System.currentTimeMillis() - time;
         rsp.add("ReRankSearchTime", time + "");
         LinkedList list = new LinkedList();
+        String brick=null, category=null;
+        if (req.getParams().get("brick")!=null && req.getParams().get("category")!=null) {
+        	brick = URLDecoder.decode(req.getParams().get("brick"),"UTF-8");
+        	category = URLDecoder.decode(req.getParams().get("category"),"UTF-8");
+        }
         for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext(); ) {
             SimpleResult result = it.next();
+            Document doc = searcher.doc(result.getIndexNumber());
             HashMap m = new HashMap(2);
             m.put("d", result.getDistance());
             // add fields as requested:
             if (req.getParams().get("fl") == null) {
-                m.put("id", result.getDocument().get("id"));
-                if (result.getDocument().get("title") != null)
-                    m.put("title", result.getDocument().get("title"));
+                m.put("id", doc.get("id"));
+                if (doc.get("title") != null)
+                    m.put("title", doc.get("title"));
             } else {
                 String fieldsRequested = req.getParams().get("fl");
                 if (fieldsRequested.contains("score")) {
@@ -441,12 +494,12 @@ public class LireRequestHandler extends RequestHandlerBase {
                 }
                 if (fieldsRequested.contains("*")) {
                     // all fields
-                    for (IndexableField field : result.getDocument().getFields()) {
+                    for (IndexableField field : doc.getFields()) {
                         String tmpField = field.name();
-                        if (result.getDocument().getFields(tmpField).length > 1) {
-                            m.put(result.getDocument().getFields(tmpField)[0].name(), result.getDocument().getValues(tmpField));
-                        } else if (result.getDocument().getFields(tmpField).length > 0) {
-                            m.put(result.getDocument().getFields(tmpField)[0].name(), result.getDocument().getFields(tmpField)[0].stringValue());
+                        if (doc.getFields(tmpField).length > 1) {
+                            m.put(doc.getFields(tmpField)[0].name(), doc.getValues(tmpField));
+                        } else if (doc.getFields(tmpField).length > 0) {
+                            m.put(doc.getFields(tmpField)[0].name(), doc.getFields(tmpField)[0].stringValue());
                         }
                     }
                 } else {
@@ -457,10 +510,10 @@ public class LireRequestHandler extends RequestHandlerBase {
                         st = new StringTokenizer(fieldsRequested, " ");
                     while (st.hasMoreElements()) {
                         String tmpField = st.nextToken();
-                        if (result.getDocument().getFields(tmpField).length > 1) {
-                            m.put(result.getDocument().getFields(tmpField)[0].name(), result.getDocument().getValues(tmpField));
-                        } else if (result.getDocument().getFields(tmpField).length > 0) {
-                            m.put(result.getDocument().getFields(tmpField)[0].name(), result.getDocument().getFields(tmpField)[0].stringValue());
+                        if (doc.getFields(tmpField).length > 1) {
+                            m.put(doc.getFields(tmpField)[0].name(), doc.getValues(tmpField));
+                        } else if (doc.getFields(tmpField).length > 0) {
+                            m.put(doc.getFields(tmpField)[0].name(), doc.getFields(tmpField)[0].stringValue());
                         }
                     }
                 }
