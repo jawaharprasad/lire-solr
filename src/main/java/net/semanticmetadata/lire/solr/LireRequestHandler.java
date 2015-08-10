@@ -42,7 +42,6 @@ package net.semanticmetadata.lire.solr;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -142,13 +141,12 @@ public class LireRequestHandler extends RequestHandlerBase {
      */
     @Override
     public void handleRequestBody(SolrQueryRequest req, SolrQueryResponse rsp) throws Exception {
-        // (1) check if the necessary parameters are here
-        if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
+    	if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
+    		handleIdSearch(req, rsp);
+    	} else if (req.getParams().get("hashes") != null) { // we are searching for hashes ...
             handleHashSearch(req, rsp);
         } else if (req.getParams().get("url") != null) { // we are searching for an image based on an URL
             handleUrlSearch(req, rsp);
-        } else if (req.getParams().get("id") != null) { // we are searching for an image based on an URL
-            handleIdSearch(req, rsp);
         } else if (req.getParams().get("extract") != null) { // we are trying to extract from an image URL.
             handleExtract(req, rsp);
         } else { // lets return random results.
@@ -195,11 +193,13 @@ public class LireRequestHandler extends RequestHandlerBase {
                 List<Term> termFilter = createTermFilter(hashes, paramField);
                 doSearch(req, rsp, searcher, paramField, paramRows, termFilter, createQuery(hashes, paramField, numberOfQueryTerms), queryFeature);
             } else {
-                rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
+                //rsp.add("Error", "Did not find an image with the given id " + req.getParams().get("id"));
+                rsp.add("docs",new String[0]);
             }
         } catch (Exception e) {
             rsp.add("Error", "There was an error with your search for the image with the id " + req.getParams().get("id")
                     + ": " + e.getMessage());
+            rsp.add("docs",new String[0]);
         }
     }
 
@@ -222,7 +222,7 @@ public class LireRequestHandler extends RequestHandlerBase {
             HashMap m = new HashMap(2);
             Document d = indexReader.document((int) Math.floor(Math.random() * maxDoc));
             m.put("id", d.getValues("id")[0]);
-            m.put("title", d.getValues("title")[0]);
+            //m.put("title", d.getValues("title")[0]);
             String fieldsRequested = req.getParams().get("fl");
             if (fieldsRequested!=null && fieldsRequested.contains(",")){
             	StringTokenizer st = new StringTokenizer(fieldsRequested, ",");
@@ -472,11 +472,6 @@ public class LireRequestHandler extends RequestHandlerBase {
         time = System.currentTimeMillis() - time;
         rsp.add("ReRankSearchTime", time + "");
         LinkedList list = new LinkedList();
-        String brick=null, category=null;
-        if (req.getParams().get("brick")!=null && req.getParams().get("category")!=null) {
-        	brick = URLDecoder.decode(req.getParams().get("brick"),"UTF-8");
-        	category = URLDecoder.decode(req.getParams().get("category"),"UTF-8");
-        }
         for (Iterator<SimpleResult> it = resultScoreDocs.iterator(); it.hasNext(); ) {
             SimpleResult result = it.next();
             Document doc = searcher.doc(result.getIndexNumber());
