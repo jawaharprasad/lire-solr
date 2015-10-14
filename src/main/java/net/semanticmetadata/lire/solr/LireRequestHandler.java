@@ -73,6 +73,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeFilter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TopDocs;
@@ -414,7 +415,13 @@ public class LireRequestHandler extends RequestHandlerBase {
                 		filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0].substring(1), tmpToken[1])), Occur.MUST_NOT));
                 	}
                 	else{
-                		filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0], tmpToken[1])), Occur.MUST));
+                		if(tmpToken[1].contains("-")){
+        					String[] tmpPrice = tmpToken[1].split("-");
+                			filter2.add(new FilterClause(NumericRangeFilter.newDoubleRange(tmpToken[0], Double.parseDouble(tmpPrice[0]), Double.parseDouble(tmpPrice[1]), true, true), Occur.MUST));
+                		}
+                		else{
+                			filter2.add(new FilterClause(new TermsFilter(new Term(tmpToken[0], tmpToken[1])), Occur.MUST));
+                		}
                 	}
                 }
             }
